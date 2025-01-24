@@ -173,7 +173,7 @@ function doDeleteModelNow() {
         return;
     }
     genericRequest('DeleteModel', { 'modelName': model.name, 'subtype': curModelMenuBrowser.subType }, data => {
-        curModelMenuBrowser.browser.update();
+        // curModelMenuBrowser.browser.update();
     });
     $('#delete_model_modal').modal('hide');
 }

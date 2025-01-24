@@ -145,7 +145,8 @@ public static class ModelsAPI
         [API.APIParameter("Model sub-type - `LoRA`, `Wildcards`, etc.")] string subtype = "Stable-Diffusion",
         [API.APIParameter("What to sort the list by - `Name`, `DateCreated`, or `DateModified.")] string sortBy = "Name",
         [API.APIParameter("If true, allow remote models. If false, only local models.")] bool allowRemote = true,
-        [API.APIParameter("If true, the sorting should be done in reverse.")] bool sortReverse = false)
+        [API.APIParameter("If true, the sorting should be done in reverse.")] bool sortReverse = false,
+        [API.APIParameter("If true, allow remote models. If false, only local models.")] bool allowLocal = true)
     {
         if (!Enum.TryParse(sortBy, true, out ModelHistorySortMode sortMode))
         {

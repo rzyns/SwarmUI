@@ -91,6 +91,13 @@ public class Program
     /// <summary>Primary execution entry point.</summary>
     public static void Main(string[] args)
     {
+        string a = Directory.GetCurrentDirectory();
+        if (a.EndsWith("\\src")) {
+            string newDir = a.BeforeLast("\\src");
+            Directory.SetCurrentDirectory(newDir);
+            Logs.Info($"Changed directory to {newDir}");
+        }
+
         SpecialTools.Internationalize(); // Fix for MS's broken localization
         BsonMapper.Global.EmptyStringToNull = false; // Fix for LiteDB's broken handling of empty strings
         ServicePointManager.DefaultConnectionLimit = 1000; // MS default limit is really low here

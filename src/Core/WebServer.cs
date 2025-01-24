@@ -110,6 +110,10 @@ public class WebServer
         Environment.SetEnvironmentVariable("ASPNETCORE_hostBuilder:reloadConfigOnChange", "false");
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions() { WebRootPath = "src/wwwroot" });
         timer.Check("[Web] WebApp builder prep");
+        builder.Services.AddCors(p => p.AddPolicy("corsapp", builder =>
+        {
+            builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
+        }));
         builder.Services.AddRazorPages();
         builder.Services.AddResponseCompression();
         builder.Logging.SetMinimumLevel(LogLevel);
@@ -220,6 +224,7 @@ public class WebServer
             await next();
         });
         WebApp.UseRouting();
+        WebApp.UseCors("corsapp");
         WebApp.UseWebSockets(new WebSocketOptions() { KeepAliveInterval = TimeSpan.FromSeconds(30) });
         WebApp.MapRazorPages();
         timer.Check("[Web] core use calls");

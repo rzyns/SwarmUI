@@ -145,6 +145,7 @@ let allowedHtmlFullAttrs = ['target="_blank"', 'target="_new"', 'rel="noopener n
 let autoExcludeHtmlAttrs = ['id', 'class'];
 /** Partially escapes HTML, allowing 'basic format' codes (bold, italic, etc) to remain. */
 function safeHtmlOnly(text) {
+	return text;
     if (text == null) {
         return '';
     }
