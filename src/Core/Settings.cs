@@ -187,6 +187,9 @@ public class Settings : AutoConfiguration
         [ConfigComment("Backends are automatically assigned unique ports. This value selects which port number to start the assignment from.\nDefault is '7820'.")]
         public int BackendStartingPort = 7820;
 
+        [ConfigComment("If enabled, backend starting port will be randomly offset at each restart.\nThis is an obscure bug fix for 'stuck ports', where restarting and reusing the same backend port causes strange misbehaviors.")]
+        public bool BackendPortRandomize = false;
+
         [ConfigComment("If you wish to access your Swarm instance externally, set this to the path of a CloudFlared executable, and it will automatically be used.\n(Must restart to apply).\nThe URL will be visible on the Server Info tab and/or terminal log.\nSee documentation in <a target=\"_blank\" href=\"{Utilities.RepoDocsRoot}Advanced Usage.md#accessing-swarmui-from-other-devices\">the docs here</a>")]
         public string CloudflaredPath = "";
 
@@ -418,6 +421,9 @@ public class Settings : AutoConfiguration
 
         [ConfigComment("Number of generations that Generate Forever should always keep queued up when enabled.\nUseful when using multiple backends to keep them all busy.")]
         public int GenerateForeverQueueSize = 1;
+
+        [ConfigComment("How long to remember your last parameters for, in hours, inside browser cookies.\nDefault is 6 hours (long enough that you can close+reopen and get same params, but short enough that if you close for the day and come back you get a fresh UI).")]
+        public double ParameterMemoryDurationHours = 6;
 
         public class LanguagesImpl : SettingsOptionsAttribute.AbstractImpl
         {

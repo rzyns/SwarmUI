@@ -13,6 +13,7 @@
     --toggle-thumb-hover: var(--button-background-hover);
     --toggle-thumb-active-hover: color-mix(in srgb, var(--emphasis) 25%, white);
     --font-monospace: 'Courier New', Courier, monospace;
+    --star: #ffff00;
 }
 .modal-content {
     background-color: var(--background) !important;
@@ -40,6 +41,10 @@ body {
     0% {background-color: #bb2020;}
     50% {background-color: #880000;}
     100% {background-color: #bb2020;}
+}
+.password {
+    text-security: disc;
+    -webkit-text-security: disc;
 }
 .top-status-bar-wrapper {
     position: absolute;

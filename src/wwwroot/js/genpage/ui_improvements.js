@@ -276,7 +276,14 @@ class UIImprovementHandler {
         }, true);
         document.addEventListener('click', (e) => {
             if (e.target.tagName == 'SELECT' && !lastShift && this.shouldAlterSelect(e.target)) { // e.shiftKey doesn't work in click for some reason
-                return this.onSelectClicked(e.target, e);
+                // The tiny delay is to try to fight broken browser extensions that spazz out when elements are spawned from a click
+                // (eg 1Password, Eno Capital One, iCloud Passwords are known offenders)
+                setTimeout(() => {
+                    this.onSelectClicked(e.target, e);
+                }, 1);
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
             }
         }, true);
         document.addEventListener('mouseup', (e) => {
@@ -379,7 +386,6 @@ class UIImprovementHandler {
             }
             isDoingADrag = true;
             let files = this.getFileList(e.dataTransfer, e);
-            console.log('dragenter', files, e);
             if (files.length > 0 && files.filter(f => f.type.startsWith('image/')).length > 0) {
                 let targets = document.getElementsByClassName('drag_image_target');
                 for (let target of targets) {
@@ -468,6 +474,10 @@ class UIImprovementHandler {
 
     /** This used to be a CSS Animation, but browsers try so hard to make those pretty and smooth that it makes a noticeable GPU perf impact. Ow. */
     runLoadSpinner(div) {
+        if (div.dataset.is_spinner_going) {
+            return;
+        }
+        div.dataset.is_spinner_going = 'true';
         setTimeout(() => {
             let s1 = div.querySelector('.loadspin1');
             if (!s1) {
@@ -481,6 +491,7 @@ class UIImprovementHandler {
             interval = setInterval(() => {
                 if (!div.isConnected || div.style.display == 'none' || !s1) {
                     clearInterval(interval);
+                    delete div.dataset.is_spinner_going;
                     return;
                 }
                 time += step;

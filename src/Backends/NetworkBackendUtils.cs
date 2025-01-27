@@ -48,7 +48,11 @@ public static class NetworkBackendUtils
         string content = await message.Content.ReadAsStringAsync();
         if (content.StartsWith("500 Internal Server Error"))
         {
-            throw new SwarmReadableErrorException($"Server turned 500 Internal Server Error, something went wrong: {content}");
+            throw new SwarmReadableErrorException($"Server returned 500 Internal Server Error, something went wrong: {content}");
+        }
+        else if (content.Length == 0 && typeof(JType) == typeof(JObject))
+        {
+            throw new SwarmReadableErrorException($"Server returned entirely empty response, something went wrong.");
         }
         try
         {
@@ -432,7 +436,7 @@ public static class NetworkBackendUtils
                 }
                 catch (Exception ex)
                 {
-                    Logs.Error($"Self-Start {nameSimple} on port {port} failed to start: {ex.Message}");
+                    Logs.Error($"Self-Start {nameSimple} on port {port} failed to start: {ex.ReadableString()}");
                     status = BackendStatus.ERRORED;
                     reviseStatus(status);
                     return;

@@ -134,7 +134,6 @@ public abstract class ComfyUIAPIAbstractBackend : AbstractT2IBackend
             TimesErrorIgnored++;
             if (!HasEverShownInternalError && TimesErrorIgnored == 15)
             {
-                HasEverShownInternalError = true;
                 Logs.Debug($"Comfy backend {BackendData.ID} has failed to load value set repeatedly. Ignoring errors of {e.GetType().Name}: {e.Message}");
             }
             if (!HasEverShownInternalError && TimesErrorIgnored > 40)
@@ -727,7 +726,12 @@ public abstract class ComfyUIAPIAbstractBackend : AbstractT2IBackend
         {
             void TryApply(string key, Image img, bool resize)
             {
-                Image fixedImage = resize ? img.Resize(user_input.GetImageWidth(), user_input.GetImageHeight()) : img;
+                int width = user_input.GetImageWidth(-1), height = user_input.GetImageHeight(-1);
+                if (width <= 0 || height <= 0)
+                {
+                    resize = false;
+                }
+                Image fixedImage = resize ? img.Resize(width, height) : img;
                 if (key.Contains("swarmloadimageb") || key.Contains("swarminputimage"))
                 {
                     user_input.ValuesInput[key] = fixedImage;

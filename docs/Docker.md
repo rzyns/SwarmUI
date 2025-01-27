@@ -76,7 +76,9 @@ In all cases you don't need to be an expert, but will need a bit of familiarity 
 - Install Docker Engine for Linux: https://docs.docker.com/engine/install/
     - You don't need Docker Desktop, just the Engine
 - Follow the Docker Linux post-install steps to ensure you can operate Docker from a user account instead of root: https://docs.docker.com/engine/install/linux-postinstall/
-    - (Optional) if you want to further refine your security, you can also enable Docker rootless mode: https://docs.docker.com/engine/security/rootless/
+    - (Optional) if you want to further refine your security, you can configure Docker rootless mode: https://docs.docker.com/engine/security/rootless/
+        - Rootless has known unresolved issues in base Docker currently. I do not recommend using it until these are patched.
+        - If you must, you'll need to maintain modified copies of the docker scripts that remove the `--user` inputs (ie rootless docker currently requires you run as root inside the container. This is obviously not good, thus the advice to not use rootless for now. See https://github.com/mamba-org/micromamba-docker/issues/407#issuecomment-2088523507 for info.)
 - Install and enable NVIDIA Container toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 - Install `git`
 - Download Swarm via git: `git clone https://github.com/mcmonkeyprojects/SwarmUI`
@@ -109,10 +111,15 @@ Mac information is currently untested, but presumed to work fairly similar to Li
 
 If you're a "docker compose" fan, there is an included docker compose file you can use as usual, which is equivalent to the "standard" option above.
 
+- Run it via `HOST_UID="$(id -u)" HOST_GID="$(id -g)" docker compose up`
+- You should probably `docker compose rm` after
+
 If you're not an active "docker compose" fan that needs it for some reason, I do not recommend it.
 
 # Advanced Usage, Notes, Troubleshooting
 
 - If you need to access a shell inside the Docker container while it's running, use `docker exec -it swarmui bash -l`
-- The "Standard" docker shoves everything in the `/` file root for legacy reasons, the "Open" docker puts things inside `/SwarmUI`
+- Everything goes under `/SwarmUI` inside the container
 - If you have an AMD or Intel GPU... uh, there's probably appropriate tooling for that. No idea what it is, good luck. (If you have such a GPU and find the answers to that, please PR docs about it!)
+- The "Standard" container runs as your own current user inside the container. Historically it originally ran as root, so you can run the script with `fixch` as the only arg to have it run as root and chown everything over.
+    - For the "Open" dockerfile, if needed, just `sudo chown -R $UID:$UID ./` inside the SwarmUI folder, since permissions are just a raw passthrough anyway.
