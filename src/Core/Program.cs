@@ -125,6 +125,7 @@ public class Program
             DataDir = Utilities.CombinePathWithAbsolute(Environment.CurrentDirectory, GetCommandLineFlag("data_dir", "Data"));
             SettingsFilePath = GetCommandLineFlag("settings_file", $"{DataDir}/Settings.fds");
             LoadSettingsFile();
+            RebuildDataDir();
             // TODO: Legacy format patch from Alpha 0.5! Remove this before 1.0.
             if (ServerSettings.DefaultUser.FileFormat.ImageFormat == "jpg")
             {
@@ -254,6 +255,7 @@ public class Program
         RefreshAllModelSets();
         WildcardsHelper.Init();
         AutoCompleteListHelper.Init();
+        UserSoundHelper.Init();
         timer.Check("Model listing");
         Logs.Init("Loading backends...");
         Backends.Load();
@@ -390,9 +392,16 @@ public class Program
         T2IModelSets["ClipVision"] = new() { ModelType = "ClipVision", FolderPaths = buildPathList(ServerSettings.Paths.SDClipVisionFolder) };
     }
 
+    /// <summary>Rebuild <see cref="DataDir"/>.</summary>
+    public static void RebuildDataDir()
+    {
+        DataDir = Utilities.CombinePathWithAbsolute(Environment.CurrentDirectory, GetCommandLineFlag("data_dir", ServerSettings.Paths.DataPath));
+    }
+
     /// <summary>Refreshes all model sets from file source.</summary>
     public static void RefreshAllModelSets()
     {
+        RebuildDataDir();
         foreach (T2IModelHandler handler in T2IModelSets.Values)
         {
             try

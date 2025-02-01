@@ -1129,6 +1129,16 @@ public class WorkflowGenerator
                 img = [MaskShrunkInfo.ScaledImage, 0];
                 mask = [MaskShrunkInfo.CroppedMask, 0];
             }
+            if (mask is null)
+            {
+                string maskNode = CreateNode("SolidMask", new JObject()
+                {
+                    ["value"] = 1,
+                    ["width"] = UserInput.GetImageWidth(),
+                    ["height"] = UserInput.GetImageHeight()
+                });
+                mask = [maskNode, 0];
+            }
             string inpaintNode = CreateNode("InpaintModelConditioning", new JObject()
             {
                 ["positive"] = pos,
@@ -1136,7 +1146,7 @@ public class WorkflowGenerator
                 ["vae"] = FinalVae,
                 ["pixels"] = img,
                 ["mask"] = mask,
-                ["noise_mask"] = true
+                ["noise_mask"] = false
             });
             pos = [inpaintNode, 0];
             neg = [inpaintNode, 1];
