@@ -188,6 +188,13 @@ public class WorkflowGenerator
         return clazz is not null && clazz == "nvidia-sana-1600";
     }
 
+    /// <summary>Returns true if the current model is Alpha-VLLM's Lumina 2.</summary>
+    public bool IsLumina()
+    {
+        string clazz = CurrentCompatClass();
+        return clazz is not null && clazz == "lumina-2";
+    }
+
     /// <summary>Returns true if the current model is Hunyuan Video.</summary>
     public bool IsHunyuanVideo()
     {
@@ -609,9 +616,18 @@ public class WorkflowGenerator
             {
                 return "llava_llama3_fp8_scaled.safetensors";
             }
-            // TODO: is a selector param needed?
             requireClipModel("llava_llama3_fp8_scaled.safetensors", "https://huggingface.co/Comfy-Org/HunyuanVideo_repackaged/resolve/main/split_files/text_encoders/llava_llama3_fp8_scaled.safetensors", "2f0c3ad255c282cead3f078753af37d19099cafcfc8265bbbd511f133e7af250");
             return "llava_llama3_fp8_scaled.safetensors";
+        }
+        string getGemma2Model()
+        {
+            // TODO: Selector param?
+            if (Program.T2IModelSets["Clip"].Models.ContainsKey("gemma_2_2b_fp16.safetensors"))
+            {
+                return "gemma_2_2b_fp16.safetensors";
+            }
+            requireClipModel("gemma_2_2b_fp16.safetensors", "https://huggingface.co/Comfy-Org/Lumina_Image_2.0_Repackaged/resolve/main/split_files/text_encoders/gemma_2_2b_fp16.safetensors", "29761442862f8d064d3f854bb6fabf4379dcff511a7f6ba9405a00bd0f7e2dbd");
+            return "gemma_2_2b_fp16.safetensors";
         }
         IsDifferentialDiffusion = false;
         LoadingModelType = type;
@@ -935,6 +951,28 @@ public class WorkflowGenerator
             });
             LoadingModel = [auraNode, 0];
         }
+        else if (IsLumina())
+        {
+            string samplingNode = CreateNode("ModelSamplingAuraFlow", new JObject()
+            {
+                ["model"] = LoadingModel,
+                ["shift"] = UserInput.Get(T2IParamTypes.SigmaShift, 6)
+            });
+            LoadingModel = [samplingNode, 0];
+            if (LoadingClip is null)
+            {
+                string dualClipLoader = CreateNode("CLIPLoader", new JObject()
+                {
+                    ["clip_name"] = getGemma2Model(),
+                    ["type"] = "lumina2"
+                });
+                LoadingClip = [dualClipLoader, 0];
+            }
+            if (LoadingVAE is null)
+            {
+                doVaeLoader(UserInput.SourceSession?.User?.Settings?.VAEs?.DefaultFluxVAE, "flux-1", "flux-ae");
+            }
+        }
         else if (!string.IsNullOrWhiteSpace(predType))
         {
             string discreteNode = CreateNode("ModelSamplingDiscrete", new JObject()
@@ -949,7 +987,7 @@ public class WorkflowGenerator
         {
             if (IsFlux())
             {
-                string fluxNode = CreateNode("ModelSamplingFlux", new JObject()
+                string samplingNode = CreateNode("ModelSamplingFlux", new JObject()
                 {
                     ["model"] = LoadingModel,
                     ["width"] = UserInput.GetImageWidth(),
@@ -957,16 +995,16 @@ public class WorkflowGenerator
                     ["max_shift"] = shiftVal,
                     ["base_shift"] = 0.5 // TODO: Does this need an input?
                 });
-                LoadingModel = [fluxNode, 0];
+                LoadingModel = [samplingNode, 0];
             }
             else if (IsHunyuanVideo())
             {
-                string fluxNode = CreateNode("ModelSamplingSD3", new JObject()
+                string samplingNode = CreateNode("ModelSamplingSD3", new JObject()
                 {
                     ["model"] = LoadingModel,
                     ["shift"] = shiftVal
                 });
-                LoadingModel = [fluxNode, 0];
+                LoadingModel = [samplingNode, 0];
             }
         }
         foreach (WorkflowGenStep step in ModelGenSteps)
