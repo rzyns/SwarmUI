@@ -90,6 +90,7 @@ public static class ModelsAPI
         modelName = modelName.TrimStart('/');
         if (session.User.IsAllowedModel(modelName))
         {
+            using ManyReadOneWriteLock.ReadClaim claim = Program.RefreshLock.LockRead();
             if (subtype == "Wildcards")
             {
                 WildcardsHelper.Wildcard card = WildcardsHelper.GetWildcard(modelName);
@@ -189,6 +190,7 @@ public static class ModelsAPI
             }
             return slashes < depth && dedup.Add(name);
         }
+        using ManyReadOneWriteLock.ReadClaim claim = Program.RefreshLock.LockRead();
         if (subtype == "Wildcards")
         {
             foreach (string file in WildcardsHelper.ListFiles)
@@ -260,6 +262,7 @@ public static class ModelsAPI
         )]
     public static async Task<JObject> ListLoadedModels(Session session)
     {
+        using ManyReadOneWriteLock.ReadClaim claim = Program.RefreshLock.LockRead();
         List<T2IModel> matches = Program.MainSDModels.Models.Values.Where(m => m.AnyBackendsHaveLoaded && session.User.IsAllowedModel(m.Name)).ToList();
         return new JObject()
         {
@@ -272,12 +275,14 @@ public static class ModelsAPI
         [API.APIParameter("The full filepath of the model to load.")] string model,
         [API.APIParameter("The ID of a backend to load the model on, or null to load on all.")] string backendId = null)
     {
+        using ManyReadOneWriteLock.ReadClaim claim = Program.RefreshLock.LockRead();
         return (await API.RunWebsocketHandlerCallDirect(SelectModelInternal, session, (model, backendId)))[0];
     }
 
     [API.APIDescription("Forcibly loads a model immediately on some or all backends, with live status updates over websocket.", "\"success\": true")]
     public static async Task<JObject> SelectModelWS(WebSocket socket, Session session, string model)
     {
+        using ManyReadOneWriteLock.ReadClaim claim = Program.RefreshLock.LockRead();
         await API.RunWebsocketHandlerCallWS(SelectModelInternal, session, (model, (string)null), socket);
         await socket.SendJson(BasicAPIFeatures.GetCurrentStatusRaw(session), API.WebsocketTimeout);
         return null;
@@ -408,6 +413,7 @@ public static class ModelsAPI
         [API.APIParameter("New model `is_negative_embedding` metadata value.")] bool is_negative_embedding = false,
         [API.APIParameter("The model's sub-type, eg `Stable-Diffusion`, `LoRA`, etc.")] string subtype = "Stable-Diffusion")
     {
+        using ManyReadOneWriteLock.ReadClaim claim = Program.RefreshLock.LockRead();
         if (!Program.T2IModelSets.TryGetValue(subtype, out T2IModelHandler handler))
         {
             return new JObject() { ["error"] = "Invalid sub-type." };
@@ -555,7 +561,10 @@ public static class ModelsAPI
             }
             if (Program.ServerSettings.Paths.DownloaderAlwaysResave)
             {
-                handler.Refresh();
+                using (ManyReadOneWriteLock.WriteClaim claim = Program.RefreshLock.LockWrite())
+                {
+                    handler.Refresh();
+                }
                 if (handler.Models.TryGetValue($"{name}.safetensors", out T2IModel model))
                 {
                     model.ResaveModel();
@@ -671,6 +680,7 @@ public static class ModelsAPI
         {
             return new JObject() { ["error"] = "Invalid sub-type." };
         }
+        using ManyReadOneWriteLock.ReadClaim claim = Program.RefreshLock.LockRead();
         T2IModel match = null;
         if (session.User.IsAllowedModel(modelName))
         {
@@ -724,6 +734,7 @@ public static class ModelsAPI
         {
             return new JObject() { ["error"] = "Invalid sub-type." };
         }
+        using ManyReadOneWriteLock.ReadClaim claim = Program.RefreshLock.LockRead();
         T2IModel match = null;
         if (session.User.IsAllowedModel(oldName))
         {
