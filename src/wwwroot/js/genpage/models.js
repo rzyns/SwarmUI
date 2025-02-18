@@ -207,7 +207,7 @@ function doRenameModelNow() {
     let folder = getRequiredElementById('model_rename_downloader_folder').value;
     let newName = folder == '(None)' ? name : `${folder}/${name}`;
     genericRequest('RenameModel', { 'oldName': model.name, 'newName': newName, 'subtype': curModelMenuBrowser.subType }, data => {
-        curModelMenuBrowser.browser.refresh();
+        // curModelMenuBrowser.browser.refresh();
     });
     $('#rename_model_modal').modal('hide');
 }
