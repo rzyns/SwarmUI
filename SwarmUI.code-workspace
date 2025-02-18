@@ -1,0 +1,10 @@
+{
+	"folders": [
+		{ "path": "." },
+		{ "path": "./dlbackend/comfy/ComfyUI" },
+		{ "path": "./src/BuiltinExtensions/ComfyUIBackend/DLNodes" },
+		{ "path": "../SwarmUI-frontend" },
+	],
+	"settings": {
+	}
+}
