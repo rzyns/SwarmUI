@@ -408,6 +408,7 @@ class GenPageBrowserClass {
                 div.className += ' model-block model-block-hoverable';
                 if (this.format.startsWith('Small')) { div.classList.add('model-block-small'); }
                 else if (this.format.startsWith('Big')) { div.classList.add('model-block-big'); }
+                else if (this.format.startsWith('Giant')) { div.classList.add('model-block-giant'); }
                 let textBlock = createDiv(null, 'model-descblock');
                 textBlock.tabIndex = 0;
                 textBlock.innerHTML = desc.description;
@@ -567,7 +568,7 @@ class GenPageBrowserClass {
             formatSelector.id = `${this.id}-format-selector`;
             formatSelector.title = 'Display format';
             formatSelector.className = 'browser-format-selector';
-            for (let format of ['Cards', 'Small Cards', 'Big Cards', 'Thumbnails', 'Small Thumbnails', 'Big Thumbnails', 'Giant Thumbnails', 'List', 'Details List']) {
+            for (let format of ['Cards', 'Small Cards', 'Big Cards', 'Giant Cards', 'Thumbnails', 'Small Thumbnails', 'Big Thumbnails', 'Giant Thumbnails', 'List', 'Details List']) {
                 let option = document.createElement('option');
                 option.value = format;
                 option.className = 'translate';

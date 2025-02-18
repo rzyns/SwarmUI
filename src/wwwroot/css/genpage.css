@@ -429,6 +429,18 @@ body {
     max-height: 14rem;
     width: 14rem;
 }
+.model-block-giant {
+    height: 27.5rem;
+    width: 52rem;
+}
+.model-block-giant .model-descblock {
+    width: 20rem;
+    height: 27.5rem;
+}
+.model-block-giant img {
+    max-height: 25rem;
+    width: 25rem;
+}
 .model-block-menu-button {
     display: block;
     position: absolute;
