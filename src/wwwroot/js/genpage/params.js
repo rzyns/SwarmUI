@@ -260,8 +260,8 @@ function genInputs(delay_final = false) {
             }
             if (isPrompt(param) ? param.visible == isMain : true) {
                 let newData = getHtmlForParam(param, "input_");
-                html += newData.html;
-                if (newData.runnable) {
+                html += newData?.html ?? "";
+                if (newData?.runnable) {
                     runnables.push(newData.runnable);
                 }
             }
@@ -269,8 +269,8 @@ function genInputs(delay_final = false) {
                 let presetParam = JSON.parse(JSON.stringify(param));
                 presetParam.toggleable = true;
                 let presetData = getHtmlForParam(presetParam, "preset_input_");
-                presetHtml += presetData.html;
-                if (presetData.runnable) {
+                presetHtml += presetData?.html ?? "";
+                if (presetData?.runnable) {
                     runnables.push(presetData.runnable);
                 }
             }
