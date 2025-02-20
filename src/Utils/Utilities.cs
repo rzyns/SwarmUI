@@ -487,6 +487,24 @@ public static class Utilities
         return CommonContentTypes.GetValueOrDefault(extension, "application/octet-stream");
     }
 
+    public static AsciiMatcher GeneralValidSymbolsMatcher = new(c => (c >= 32 && c <= 126) || c == 9 || c == 10 || c == 13);
+
+    /// <summary>Clean some potentially-trash text for output into logs. Strips invalid non-ascii characters and cuts to max length.
+    /// Useful for situations such as logging parser errors, to avoid corrupt data trashing the logs.</summary>
+    public static string CleanTrashTextForDebug(string text)
+    {
+        string clean = GeneralValidSymbolsMatcher.TrimToMatches(text);
+        if (clean != text)
+        {
+            clean = $"(Invalid Characters Stripped) {clean}";
+        }
+        if (clean.Length > 256)
+        {
+            clean = $"{clean[..256]}...";
+        }
+        return clean;
+    }
+
     public static JObject ParseToJson(this string input)
     {
         try
@@ -495,7 +513,7 @@ public static class Utilities
         }
         catch (JsonReaderException ex)
         {
-            throw new JsonReaderException($"Failed to parse JSON `{input.Replace("\n", "  ")}`: {ex.Message}");
+            throw new JsonReaderException($"Failed to parse JSON `{CleanTrashTextForDebug(input.Replace("\n", "  "))}`: {ex.Message}");
         }
     }
 
@@ -815,12 +833,12 @@ public static class Utilities
     }
 
     /// <summary>Modifies a width/height resolution to get the nearest valid resolution for the given megapixel target scale, and rounds to a factor of x64.</summary>
-    public static (int, int) ResToModelFit(int width, int height, int mpTarget)
+    public static (int, int) ResToModelFit(int width, int height, int mpTarget, int precision = 64)
     {
         int mp = width * height;
         double scale = Math.Sqrt(mpTarget / (double)mp);
-        int newWid = (int)RoundToPrecision(width * scale, 64);
-        int newHei = (int)RoundToPrecision(height * scale, 64);
+        int newWid = (int)RoundToPrecision(width * scale, precision);
+        int newHei = (int)RoundToPrecision(height * scale, precision);
         return (newWid, newHei);
     }
 
