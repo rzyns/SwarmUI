@@ -6,7 +6,8 @@
 [Hunyuan Video](#hunyuan-video) | 2024 | Tencent | 12B MMDiT | Text2Video and Image2Video variants | Modern, High Quality |
 [Genmo Mochi 1](#genmo-mochi-1-text2video) | 2024 | Genmo | 10B DiT | Text2Video | Modern, Decent |
 [Lightricks LTX Video](#lightricks-ltx-video) | 2024 | Lightricks | 3B DiT | Text/Image 2Video | Modern, Fast but ugly |
-[Nvidia Cosmos](#nvidia-cosmos) | 2025 | NVIDIA | Various | Text/Image/Video 2Video | Modern, Very slow, mixed quality |
+[Nvidia Cosmos](#nvidia-cosmos) | 2025 | NVIDIA | Various | Text/Image/Video 2Video | Modern, very slow, mixed quality |
+[Wan 2.1](#wan-21) | 2025 | Alibaba - Wan-AI | 1.3B and 14B | Text/Image 2Video | Modern, Incredible Quality |
 
 **Unsupported:**
 - Below are some video models that are not natively supported in SwarmUI's `Generate` tab, but are available to use via the `Comfy Workflow` and `Simple` tabs:
@@ -26,6 +27,24 @@
 - This is just the image test prompt from [Model Support](/docs/Model%20Support.md) but I swapped 'photo' to 'video', 'sitting' to 'walking', and 'holding' to 'carrying'. Goal is to achieve the same test as the image prompt does, but with a request for motion.
 - All generations are done on the base model of the relevant class, not on any finetune/lora/etc. Finetunes are likely to significantly change the qualitative capabilities, but unlikely to significantly change general ability to understand and follow prompts.
 - At time of writing, Hunyuan Video is the only properly good model. LTXV is really fast though.
+
+## Basic Usage
+
+### Text-To-Video Models
+
+- Select the video model in the usual `Models` sub-tab, and configure parameters as usual, and hit Generate.
+- The `Text To Video` parameter group will be available to configure video-specific parameters.
+
+### Image-To-Video Models
+
+- Select a normal model as the base in the `Models` sub-tab, not your video model. Eg SDXL or Flux.
+- Select the video model under the `Image To Video` parameter group.
+- Generate as normal - the image model will generate an image, then the video model will turn it into a video.
+- If you want a raw/external image as your input:
+    - Use the `Init Image` parameter group, upload your image there
+    - Set `Init Image Creativity` to 0
+    - The image model will be skipped entirely
+    - You can use the `Res` button next to your image to copy the resolution in (otherwise your image may be stretched or squished)
 
 # Video Models
 
@@ -198,3 +217,56 @@
 - **Frame Count:** The model is trained only for 121 frames. Some of the model variants work at lower frame counts with quality loss, but generally you're stuck at exactly 121.
 - **CFG and Steps:** Nvidia default recommends CFG=7 and Steps=35
 - **Performance:** The models are extremely slow. Expect over 10 minutes for a single video even on a 4090.
+
+## Wan 2.1
+
+![wan21_14b](https://github.com/user-attachments/assets/17ace901-bc5f-48d0-ab01-ed8984a1b1dc)
+
+*(Warn 2.1 - 14B Text2Video)*
+
+![wan21_13b](https://github.com/user-attachments/assets/51c40a08-9a05-4553-9785-67ae4fe8b2ac)
+
+*(Wan 2.1 - 1.3B Text2Video)*
+
+### Wan 2.1 Install
+
+- [Wan 2.1](https://huggingface.co/Wan-AI/Wan2.1-T2V-1.3B), a video model series from Alibaba, has initial support in SwarmUI.
+    - Supports separate models for Text2Video or Image2Video.
+- Download the comfy-format Wan model from <https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/tree/main/split_files/diffusion_models>
+    - Or Kijai's FP8 variants <https://huggingface.co/Kijai/WanVideo_comfy/tree/main>
+    - For Text2Video, pick either 1.3B (small) model, or 14B (large) model
+    - For Image2Video, pick either 480p (640x640 res) or 720p (960x960 res) model
+        - These are not autodetected separately, 480p is assumed.
+        - For 720p variant, you will want to click the `☰` hamburger menu on the model, then `Edit Metadata`, and set the `Resolution` to `960x960`
+    - the 1.3B model is very small and can run on almost any modern GPU
+    - the 14B versions are 10x larger and require around 10x more VRAM, requires nvidia xx90 tier models to run at decent speed
+    - save to `diffusion_models`
+- Or GGUF format for reduced VRAM requirements
+    - For T2V 14B <https://huggingface.co/city96/Wan2.1-T2V-14B-gguf/tree/main>
+    - save to `diffusion_models`
+    - click the `☰` hamburger menu on the model, then `Edit Metadata`, and set the `Architecture` to whichever is correct for the model (eg `Wan 2.1 Text2Video 14B`)
+- The text encoder is `umt5-xxl` ("UniMax" T5 from Google), not the same T5-XXL used by other models.
+    - It will be automatically downloaded.
+- The VAE will be automatically downloaded.
+
+### Wan 2.1 Parameters
+
+- **Prompt:** Standard. Supports English and Chinese text.
+    - They have an official reference negative prompt in Chinese, it is not required but may help: `色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走`
+        - (This is just a word spam negative "bright colors, overexposed, static, blurred details, subtitles, ..." but in Chinese. It does help though.)
+- **FPS:** The model is trained for 16 FPS.
+- **Resolution:** The models are trained for `832x480`, which is a 16:9 equivalent for `640x640`
+    - the 14B models can also do `1280x720`, which is a 16:9 equivalent for `960x960`
+    - Other resolutions seem to work fine. Even the 1.3B, which is not trained for 960, can technically still do 960 just with a quality drop as it gets too large.
+- **Frame Count (Length):** you can select pretty freely, different values work fine. If unspecified, will default to 81 (5 seconds).
+    - Use 17 for one second, 33 for two, 49 for three, 65 for 4, 81 for 5.
+    - Higher frame counts above 81 seem to become distorted - still work but quality degrades and glitching appears.
+    - 14B may heavily favor 81 frames (5 seconds) and behave unusually at shorter lengths
+- **Steps:** Standard, eg Steps=20, is fine. Changing this value works broadly as expected with other models.
+- **CFG Scale:** Standard CFG ranges are fine. Official recommended CFG is 6, but you can play with it.
+- **Sampler and Scheduler:** Standard, eg Euler + Simple
+    - You can experiment with changing these around, some may be better than others
+- **Sigma Shift:** range of 8 to 12 suggested. Default is 8.
+- **Performance:** To be filled in once optimizations are complete.
+    - If you see generations completing but then freezing or dying at the end, the advanced `VAE Tiling` parameters may help fix that.
+    - The Image2Video models are much more performance-intensive than the Text2Video models
