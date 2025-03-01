@@ -73,6 +73,12 @@ public class PythonLaunchHelper
             start.Environment["PATH"] = ReworkPythonPaths(Path.GetFullPath("./dlbackend/comfy/python_embeded"));
             CleanEnvironmentOfPythonMess(start, "(Generic python launch) ");
         }
+        else if (File.Exists("./dlbackend/ComfyUI/.venv/bin/python"))
+        {
+            start.FileName = "./dlbackend/ComfyUI/.venv/bin/python";
+            CleanEnvironmentOfPythonMess(start, "(Generic python launch) ");
+            start.Environment["PATH"] = ReworkPythonPaths(Path.GetFullPath("./dlbackend/ComfyUI/.venv/bin"));
+        }
         else if (File.Exists("./dlbackend/ComfyUI/venv/bin/python"))
         {
             start.FileName = "./dlbackend/ComfyUI/venv/bin/python";

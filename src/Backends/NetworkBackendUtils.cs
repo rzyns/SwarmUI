@@ -227,24 +227,31 @@ public static class NetworkBackendUtils
     {
         string path = script.Replace('\\', '/');
         string dir = Path.GetDirectoryName(path);
-        if (File.Exists($"{dir}/venv/Scripts/python.exe"))
+
+        string[] venvNames = [ ".venv", "venv" ];
+
+        foreach (string venvName in venvNames)
         {
-            return Path.GetFullPath($"{dir}/venv/Lib");
-        }
-        if (File.Exists($"{dir}/../python_embeded/python.exe"))
-        {
-            return Path.GetFullPath($"{dir}/../python_embeded/Lib");
-        }
-        if (File.Exists($"{dir}/venv/bin/python3"))
-        {
-            //return Path.GetFullPath($"{dir}/venv/lib/");
-            // sub-folder named like "python3.10"
-            string[] subDirs = Directory.GetDirectories($"{dir}/venv/lib/");
-            foreach (string subDir in subDirs)
+
+            if (File.Exists($"{dir}/{venvName}/Scripts/python.exe"))
             {
-                if (subDir.AfterLast('/').StartsWith("python"))
+                return Path.GetFullPath($"{dir}/{venvName}/Lib");
+            }
+            if (File.Exists($"{dir}/../python_embeded/python.exe"))
+            {
+                return Path.GetFullPath($"{dir}/../python_embeded/Lib");
+            }
+            if (File.Exists($"{dir}/{venvName}/bin/python3"))
+            {
+                //return Path.GetFullPath($"{dir}/venv/lib/");
+                // sub-folder named like "python3.10"
+                string[] subDirs = Directory.GetDirectories($"{dir}/{venvName}/lib/");
+                foreach (string subDir in subDirs)
                 {
-                    return Path.GetFullPath(subDir);
+                    if (subDir.AfterLast('/').StartsWith("python"))
+                    {
+                        return Path.GetFullPath(subDir);
+                    }
                 }
             }
         }
@@ -266,22 +273,35 @@ public static class NetworkBackendUtils
         forcePrior = "";
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            if (File.Exists($"{dir}/venv/Scripts/python.exe"))
+            (string, string)[] pythonPaths = [
+                ($"{dir}/.venv/Scripts", "venv"),
+                ($"{dir}/../.venv/Scripts", "venv"),
+                ($"{dir}/venv/Scripts", "venv"),
+                ($"{dir}/../venv/Scripts", "venv"),
+                ($"{dir}/../python_embeded", "embedded"),
+            ];
+
+            start.FileName = "python";
+
+            foreach ((string, string) pythonPath in pythonPaths)
             {
-                start.FileName = Path.GetFullPath($"{dir}/venv/Scripts/python.exe");
-                AddPath(Path.GetFullPath($"{dir}/venv"));
+                if (File.Exists($"{pythonPath.Item1}/python.exe"))
+                {
+                    start.FileName = Path.GetFullPath($"{pythonPath.Item1}/python.exe");
+                    if (pythonPath.Item2 == "embedded")
+                    {
+                        start.WorkingDirectory = Path.GetFullPath($"{dir}/..");
+                        preArgs = "-s " + Path.GetFullPath(path)[(start.WorkingDirectory.Length + 1)..];
+                        break;
+                    }
+                    else if (pythonPath.Item2 == "venv")
+                    {
+                        AddPath(Path.GetFullPath($"{dir}/{pythonPath.Item2}"));
+                        break;
+                    }
+                }
             }
-            else if (File.Exists($"{dir}/../python_embeded/python.exe"))
-            {
-                start.FileName = Path.GetFullPath($"{dir}/../python_embeded/python.exe");
-                start.WorkingDirectory = Path.GetFullPath($"{dir}/..");
-                preArgs = "-s " + Path.GetFullPath(path)[(start.WorkingDirectory.Length + 1)..];
-                AddPath(Path.GetFullPath($"{dir}/../python_embeded"));
-            }
-            else
-            {
-                start.FileName = "python";
-            }
+
             if (File.Exists($"{dir}/zluda/zluda.exe"))
             {
                 string pythonexe = start.FileName;
@@ -292,14 +312,23 @@ public static class NetworkBackendUtils
         }
         else
         {
-            if (File.Exists($"{dir}/venv/bin/python3"))
+            (string, string)[] pythonPaths = [
+                ($"{dir}/.venv/bin", "venv"),
+                ($"{dir}/../.venv/bin", "venv"),
+                ($"{dir}/venv/bin", "venv"),
+                ($"{dir}/../venv/bin", "venv"),
+            ];
+
+            start.FileName = "python3";
+
+            foreach ((string, string) pythonPath in pythonPaths)
             {
-                start.FileName = Path.GetFullPath($"{dir}/venv/bin/python3");
-                AddPath(Path.GetFullPath($"{dir}/venv"));
-            }
-            else
-            {
-                start.FileName = "python3";
+                if (File.Exists($"{pythonPath.Item1}/python3"))
+                {
+                    start.FileName = Path.GetFullPath($"{pythonPath.Item1}/python3");
+                    AddPath(Path.GetFullPath($"{dir}/{pythonPath.Item2}"));
+                    break;
+                }
             }
         }
     }
