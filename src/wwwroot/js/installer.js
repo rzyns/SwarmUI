@@ -1,6 +1,6 @@
 
 class InstallerClass {
-    parts = ['license', 'skip', 'themes', 'installed_for', 'backends', 'models', 'end'];
+    parts = ['license', 'skip', 'shortcut', 'themes', 'installed_for', 'backends', 'models', 'end'];
     backButton = getRequiredElementById('installer_button_back');
     nextButton = getRequiredElementById('installer_button_next');
     bottomInfo = getRequiredElementById('bottom_info');
@@ -23,6 +23,17 @@ class InstallerClass {
         }
         for (let elem of document.getElementsByTagName('fieldset')) {
             elem.addEventListener('change', this.check.bind(this));
+        }
+        for (let elem of getRequiredElementById('install_path_selection_field').getElementsByClassName('installer-click-radio')) {
+            let radio = elem.getElementsByTagName('input')[0];
+            elem.addEventListener('click', () => {
+                radio.click();
+                if (radio.value == 'just_install') {
+                    this.moveToPage(this.parts.length - 1);
+                    return;
+                }
+                this.moveToPage(2);
+            });
         }
         getRequiredElementById('installer_button_confirm').addEventListener('click', this.submit.bind(this));
         getSession(() => {
@@ -65,17 +76,13 @@ class InstallerClass {
     }
 
     next() {
-        if (this.parts[this.cur_part] == 'skip') {
-            let skip = getRadioSelectionInFieldset('install_path_selection_field');
-            if (skip == 'just_install') {
-                this.moveToPage(this.parts.length - 1);
-                return;
-            }
-        }
         this.moveToPage(this.cur_part + 1);
     }
 
     back() {
+        if (this.cur_part == this.parts.length - 1 && getRadioSelectionInFieldset('install_path_selection_field') == 'just_install') {
+            this.moveToPage(2);
+        }
         this.moveToPage(this.cur_part - 1);
     }
 
@@ -85,8 +92,10 @@ class InstallerClass {
                 return true;
             case 'amd':
                 return getRadioSelectionInFieldset('amd_selection_field') != null;
+            case 'shortcut':
+                return getRadioSelectionInFieldset('shortcut_selection_field') != null;
             case 'skip':
-                return getRadioSelectionInFieldset('install_path_selection_field') != null;
+                return false;
             case 'themes':
                 return getRadioSelectionInFieldset('theme_selection_field') != null;
             case 'installed_for':
@@ -133,6 +142,11 @@ class InstallerClass {
         if (amd_section) {
             install_amd = getRadioSelectionInFieldset('amd_selection_field') == 'yes';
         }
+        let shortcut_section = document.getElementById('shortcut_selection_field');
+        let make_shortcut = false;
+        if (shortcut_section) {
+            make_shortcut = getRadioSelectionInFieldset('shortcut_selection_field') == 'yes';
+        }
         let models = this.modelsToDownload();
         return {
             theme: getRadioSelectionInFieldset('theme_selection_field'),
@@ -140,7 +154,8 @@ class InstallerClass {
             backend: getRadioSelectionInFieldset('backend_selection_field'),
             models: models.length == 0 ? 'none' : this.modelsToDownload().join(', '),
             language: document.getElementById('installer_language').value,
-            install_amd: install_amd
+            install_amd: install_amd,
+            make_shortcut: make_shortcut
         };
     }
 

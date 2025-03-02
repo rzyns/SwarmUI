@@ -364,10 +364,31 @@ public class WorkflowGenerator
         string result;
         if (Features.Contains("comfy_loadimage_b64") && !RestrictCustomNodes)
         {
-            result = CreateNode("SwarmLoadImageB64", new JObject()
+            if (img.Type == Image.ImageType.IMAGE)
             {
-                ["image_base64"] = (resize ? img.Resize(UserInput.GetImageWidth(), UserInput.GetImageHeight()) : img).AsBase64
-            }, nodeId);
+                result = CreateNode("SwarmLoadImageB64", new JObject()
+                {
+                    ["image_base64"] = (resize ? img.Resize(UserInput.GetImageWidth(), UserInput.GetImageHeight()) : img).AsBase64
+                }, nodeId);
+            }
+            else
+            {
+                result = CreateNode("SwarmLoadImageB64", new JObject()
+                {
+                    ["image_base64"] = img.AsBase64
+                }, resize ? null : nodeId);
+                if (resize)
+                {
+                    result = CreateNode("ImageScale", new JObject()
+                    {
+                        ["image"] = new JArray() { result, 0 },
+                        ["width"] = UserInput.GetImageWidth(),
+                        ["height"] = UserInput.GetImageHeight(),
+                        ["upscale_method"] = "bilinear",
+                        ["crop"] = "disabled"
+                    }, nodeId);
+                }
+            }
         }
         else
         {
@@ -513,6 +534,22 @@ public class WorkflowGenerator
         return Workflow.ContainsKey(id);
     }
 
+    public int T2VFPSOverride = -1;
+
+    public int Text2VideoFPS()
+    {
+        if (T2VFPSOverride > 0)
+        {
+            return T2VFPSOverride;
+        }
+        int fpsDefault = 24;
+        if (IsWanVideo())
+        {
+            fpsDefault = 16;
+        }
+        return UserInput.Get(T2IParamTypes.Text2VideoFPS, fpsDefault);
+    }
+
     /// <summary>Creates a node to save an image output.</summary>
     public string CreateImageSaveNode(JArray image, string id = null)
     {
@@ -526,15 +563,10 @@ public class WorkflowGenerator
                 });
                 image = [bounced, 0];
             }
-            int fpsDefault = 24;
-            if (IsWanVideo())
-            {
-                fpsDefault = 16;
-            }
             return CreateNode("SwarmSaveAnimationWS", new JObject()
             {
                 ["images"] = image,
-                ["fps"] = UserInput.Get(T2IParamTypes.Text2VideoFPS, fpsDefault),
+                ["fps"] = Text2VideoFPS(),
                 ["lossless"] = false,
                 ["quality"] = 95,
                 ["method"] = "default",
