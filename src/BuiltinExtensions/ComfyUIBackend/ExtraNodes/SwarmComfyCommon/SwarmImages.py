@@ -136,11 +136,67 @@ class SwarmTrimFrames:
     DESCRIPTION = "Trims frames from the start and end of a video."
 
     def trim(self, image, trim_start, trim_end):
+        if image.shape[0] <= 1:
+            return (image,)
         s_in = image
         start = max(0, min(s_in.shape[0], trim_start))
         end = max(0, min(s_in.shape[0], trim_end))
         s = s_in[start:s_in.shape[0] - end].clone()
         return (s,)
+
+
+class SwarmCountFrames:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image": ("IMAGE",)
+            }
+        }
+
+    CATEGORY = "SwarmUI/images"
+    RETURN_TYPES = ("INT",)
+    FUNCTION = "count"
+    DESCRIPTION = "Counts the number of frames in an image."
+
+    def count(self, image):
+        return (image.shape[0],)
+
+
+class SwarmImageWidth:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image": ("IMAGE",)
+            }
+        }
+
+    CATEGORY = "SwarmUI/images"
+    RETURN_TYPES = ("INT",)
+    FUNCTION = "get_width"
+    DESCRIPTION = "Gets the width of an image."
+
+    def get_width(self, image):
+        return (image.shape[-2],)
+
+
+class SwarmImageHeight:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image": ("IMAGE",)
+            }
+        }
+
+    CATEGORY = "SwarmUI/images"
+    RETURN_TYPES = ("INT",)
+    FUNCTION = "get_height"
+    DESCRIPTION = "Gets the height of an image."
+
+    def get_height(self, image):
+        return (image.shape[-3],)
 
 
 class SwarmImageCompositeMaskedColorCorrecting:
@@ -287,5 +343,8 @@ NODE_CLASS_MAPPINGS = {
     "SwarmVideoBoomerang": SwarmVideoBoomerang,
     "SwarmImageNoise": SwarmImageNoise,
     "SwarmTrimFrames": SwarmTrimFrames,
+    "SwarmCountFrames": SwarmCountFrames,
+    "SwarmImageWidth": SwarmImageWidth,
+    "SwarmImageHeight": SwarmImageHeight,
     "SwarmImageCompositeMaskedColorCorrecting": SwarmImageCompositeMaskedColorCorrecting
 }

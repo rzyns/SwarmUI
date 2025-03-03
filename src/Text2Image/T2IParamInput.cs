@@ -609,6 +609,7 @@ public class T2IParamInput
         };
         PromptTagPostProcessors["object"] = PromptTagPostProcessors["segment"];
         PromptTagPostProcessors["region"] = PromptTagPostProcessors["segment"];
+        PromptTagPostProcessors["extend"] = PromptTagPostProcessors["segment"];
         PromptTagBasicProcessors["break"] = (data, context) =>
         {
             return "<break>";
@@ -1298,7 +1299,7 @@ public class T2IParamInput
         ValuesInput[param.ID] = obj;
         if (param.FeatureFlag is not null)
         {
-            RequiredFlags.Add(param.FeatureFlag);
+            RequiredFlags.UnionWith(param.FeatureFlag.SplitFast(','));
         }
     }
 
@@ -1318,7 +1319,7 @@ public class T2IParamInput
         ValuesInput[param.Type.ID] = val;
         if (param.Type.FeatureFlag is not null)
         {
-            RequiredFlags.Add(param.Type.FeatureFlag);
+            RequiredFlags.UnionWith(param.Type.FeatureFlag.SplitFast(','));
         }
     }
     

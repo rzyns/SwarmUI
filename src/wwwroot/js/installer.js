@@ -1,6 +1,6 @@
 
 class InstallerClass {
-    parts = ['license', 'skip', 'shortcut', 'themes', 'installed_for', 'backends', 'models', 'end'];
+    parts = ['license', 'skip', 'themes', 'installed_for', 'backends', 'models', 'end'];
     backButton = getRequiredElementById('installer_button_back');
     nextButton = getRequiredElementById('installer_button_next');
     bottomInfo = getRequiredElementById('bottom_info');
@@ -9,6 +9,10 @@ class InstallerClass {
         let amdPart = document.getElementById('installer_section_amd');
         if (amdPart) {
             this.parts.splice(1, 0, 'amd');
+        }
+        let shortcutPart = document.getElementById('installer_section_shortcut');
+        if (shortcutPart) {
+            this.parts.splice(this.parts.indexOf('skip') + 1, 0, 'shortcut');
         }
         this.cur_part = 0;
         this.backButton.addEventListener('click', this.back.bind(this));
@@ -32,7 +36,7 @@ class InstallerClass {
                     this.moveToPage(this.parts.length - 1);
                     return;
                 }
-                this.moveToPage(2);
+                this.moveToPage(this.parts.findIndex(x => x == 'skip') + 1);
             });
         }
         getRequiredElementById('installer_button_confirm').addEventListener('click', this.submit.bind(this));
@@ -81,7 +85,7 @@ class InstallerClass {
 
     back() {
         if (this.cur_part == this.parts.length - 1 && getRadioSelectionInFieldset('install_path_selection_field') == 'just_install') {
-            this.moveToPage(2);
+            this.moveToPage(this.parts.findIndex(x => x == 'skip'));
         }
         this.moveToPage(this.cur_part - 1);
     }

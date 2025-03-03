@@ -481,6 +481,23 @@ function genInputs(delay_final = false) {
             inputBatchSize.value = 1;
             triggerChangeFor(inputBatchSize);
         }
+        let inputInterpolator1 = document.getElementById('input_textvideoframeinterpolationmethod');
+        if (inputInterpolator1) {
+            inputInterpolator1.addEventListener('change', () => {
+                console.log(inputInterpolator1.value, currentBackendFeatureSet);
+                if (inputInterpolator1.value == 'GIMM-VFI' && !currentBackendFeatureSet.includes('frameinterps_gimmvfi')) {
+                    installFeatureById('gimm_vfi', null);
+                }
+            });
+        }
+        let inputInterpolator2 = document.getElementById('input_videoframeinterpolationmethod');
+        if (inputInterpolator2) {
+            inputInterpolator2.addEventListener('change', () => {
+                if (inputInterpolator2.value == 'GIMM-VFI' && !currentBackendFeatureSet.includes('frameinterps_gimmvfi')) {
+                    installFeatureById('gimm_vfi', null);
+                }
+            });
+        }
         let inputInitImage = document.getElementById('input_initimage');
         if (inputInitImage && inputAspectRatio && inputWidth && inputHeight) {
             let targetDiv = findParentOfClass(inputInitImage, 'auto-input').querySelector('.auto-image-input-label');
@@ -954,7 +971,7 @@ function hideUnsupportableParams() {
         let elem = document.getElementById(`input_${param.id}`);
         if (elem) {
             let box = findParentOfClass(elem, 'auto-input');
-            let supported = param.feature_flag == null || currentBackendFeatureSet.includes(param.feature_flag);
+            let supported = param.feature_flag == null || param.feature_flag.split(',').every(f => currentBackendFeatureSet.includes(f));
             let filterShow = true;
             if (filter && param.id != 'prompt') {
                 let searchText = `${param.id} ${param.name} ${param.description} ${param.group ? param.group.name : ''}`.toLowerCase();
