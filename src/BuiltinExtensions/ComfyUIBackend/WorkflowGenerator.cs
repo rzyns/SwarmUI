@@ -202,6 +202,13 @@ public class WorkflowGenerator
         return clazz is not null && clazz == "hunyuan-video";
     }
 
+    /// <summary>Returns true if the current model is Hunyuan Video Image2Video.</summary>
+    public bool IsHunyuanVideoI2V()
+    {
+        string clazz = CurrentModelClass()?.ID;
+        return clazz is not null && clazz == "hunyuan-video-i2v";
+    }
+
     /// <summary>Returns true if the current model is Hunyuan Video - Skyreels.</summary>
     public bool IsHunyuanVideoSkyreels()
     {
@@ -1664,7 +1671,7 @@ public class WorkflowGenerator
     public void CreateImageToVideo(T2IModel vidModel, ref int? frames, double? videoCfg, ref int? videoFps, JToken width, JToken height, string prompt, string negPrompt, int steps, long seed, Func<JArray, JArray, (JArray, int)> altLatent = null, int batchInd = -1, int batchLen = -1)
     {
         bool hadSpecialCond = false;
-        string defSampler = "dpmpp_2m_sde_gpu", defScheduler = "karras";
+        string defSampler = null, defScheduler = null;
         double defCfg = 7;
         string scaled = CreateNode("ImageScale", new JObject()
         {
@@ -1742,7 +1749,31 @@ public class WorkflowGenerator
             defSampler = "res_multistep";
             defScheduler = "karras";
         }
-        else if (vidModel.ModelClass?.CompatClass == "hunyuan-video")
+        else if (vidModel.ModelClass?.ID == "hunyuan-video-i2v")
+        {
+            videoFps ??= 24;
+            frames ??= 53;
+            FinalLoadedModel = vidModel;
+            (vidModel, model, JArray clip, vae) = CreateStandardModelLoader(vidModel, "image2video", null, true);
+            posCond = CreateConditioning($"<image:{FinalImageOut[0]},{FinalImageOut[1]}>{prompt}", clip, vidModel, true);
+            negCond = CreateConditioning(negPrompt, clip, vidModel, false);
+            string i2vnode = CreateNode("HunyuanImageToVideo", new JObject()
+            {
+                ["positive"] = posCond,
+                ["vae"] = vae,
+                ["width"] = width,
+                ["height"] = height,
+                ["length"] = frames,
+                ["batch_size"] = 1,
+                ["start_image"] = FinalImageOut
+            });
+            posCond = [i2vnode, 0];
+            defCfg = 1;
+            latent = [i2vnode, 1];
+            defSampler = "euler";
+            defScheduler = "simple";
+        }
+        else if (vidModel.ModelClass?.CompatClass == "hunyuan-video") // skyreels
         {
             videoFps ??= 24;
             frames ??= 73;
@@ -1837,6 +1868,8 @@ public class WorkflowGenerator
             videoFps ??= 6; // SVD
             frames ??= 25;
             defCfg = 2.5;
+            defSampler = "dpmpp_2m_sde_gpu";
+            defScheduler = "karras";
             JArray clipVision;
             if (vidModel.ModelClass?.ID.EndsWith("/tensorrt") ?? false)
             {
@@ -2080,6 +2113,29 @@ public class WorkflowGenerator
             {
                 ["GEMMA"] = clip,
                 ["text"] = prompt
+            }, id);
+        }
+        else if (IsHunyuanVideoI2V() && prompt.StartsWith("<image:"))
+        {
+            (string prefix, string content) = prompt.BeforeAndAfter('>');
+            (string imgNodeId, string imgNodePart) = prefix.After(':').BeforeAndAfter(',');
+            string targetName = "llava_llama3_vision.safetensors";
+            RequireVisionModel(targetName, "https://huggingface.co/Comfy-Org/HunyuanVideo_repackaged/resolve/main/split_files/clip_vision/llava_llama3_vision.safetensors", "7d0f89bf7860815f3a994b9bdae8ebe3a29c161825d03ca9262cb13b0c973aa6");
+            string clipLoader = CreateNode("CLIPVisionLoader", new JObject()
+            {
+                ["clip_name"] = targetName
+            });
+            string encoded = CreateNode("CLIPVisionEncode", new JObject()
+            {
+                ["clip_vision"] = new JArray() { clipLoader, 0 },
+                ["image"] = new JArray() { imgNodeId, int.Parse(imgNodePart) },
+                ["crop"] = "center"
+            });
+            node = CreateNode("TextEncodeHunyuanVideo_ImageToVideo", new JObject()
+            {
+                ["clip"] = clip,
+                ["clip_vision_output"] = new JArray() { encoded, 0 },
+                ["prompt"] = content
             }, id);
         }
         else if (Features.Contains("variation_seed") && (needsAdvancedEncode || (UserInput.TryGet(T2IParamTypes.FluxGuidanceScale, out _) && HasFluxGuidance()) || IsHunyuanVideoSkyreels()))
