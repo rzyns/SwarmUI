@@ -74,7 +74,7 @@
 - Or use the gguf models from city96 <https://huggingface.co/city96/HunyuanVideo-gguf/tree/main>
     - `Q6_K` is near identical to full precision and is recommended for 24 gig cards, `Q4_K_M` is recommended if you have low VRAM, results are still very close, other variants shouldn't be used normally
     - Save to the `diffusion_models` folder, then load up Swarm and click the `☰` hamburger menu on the model, then `Edit Metadata`, and set the `Architecture:` field to `Hunyuan Video` (this *might* autodetect but not guaranteed so double-check it)
-- The text encoders (T5-XXL, and LLaVA-LLaMA3) and VAE will be automatically downloaded.
+- The text encoders (CLIP-L, and LLaVA-LLaMA3) and VAE will be automatically downloaded.
 - When selected, the `Text To Video` parameter group will become visible
 
 ### Hunyuan Video Parameters
@@ -126,7 +126,8 @@
 
 - Hunyuan Image2Video is the official image-to-video model from Hunyuan's team, install info above.
 - Works like any other Image2Video model, with the same general parameter expectations as regular Hunyuan Video.
-- You will want to use the Advanced -> `Other Fixes` -> `Trim Video Start Frames` parameter with a value of `4`, as the model tends to corrupt the first few frames.
+- For I2V "v1", You will want to use the Advanced -> `Other Fixes` -> `Trim Video Start Frames` parameter with a value of `4`, as the model tends to corrupt the first few frames.
+- For I2V "v2" / "Fixed" version, you will need to click the `☰` hamburger menu on the model, then `Edit Metadata`, and set the `Architecture:` field to `Hunyuan Video - Image2Video V2 ('Fixed')`
 
 ### SkyReels Text2Video
 

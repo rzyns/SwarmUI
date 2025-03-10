@@ -13,7 +13,7 @@
 [Stable Cascade](#stable-cascade) | unet cascade | 2024 | Stability AI | 5B | Outdated |
 [PixArt Sigma](#pixart-sigma) | DiT | 2024 | PixArt | 1B | Outdated |
 [Nvidia Sana](#nvidia-sana) | DiT | 2024 | NVIDIA | 1.6B | Modern, Low Quality |
-[AuraFlow v0.1 and v0.2](#auraflow-v01) | MMDiT | 2024 | Fal.AI | 6B | Outdated |
+[AuraFlow](#auraflow) | MMDiT | 2024 | Fal.AI | 6B | Outdated |
 [Flux.1](#black-forest-labs-flux1-models) | MMDiT | 2024 | Black Forest Labs | 12B | Modern, High Quality |
 [Lumina 2.0](#lumina-2) | NextDiT | 2025 | Alpha-VLLM | 2.6B | Modern, Decent Quality |
 
@@ -157,14 +157,16 @@ These steps are not friendly to beginners (if Sana gains popularity, likely more
 - Only Sana 1600M 1024 has been validated currently
 - use a CFG around 4
 
-# AuraFlow v0.1
+# AuraFlow
 
 ![img](/docs/images/models/auraflow-02.jpg)
 *(above image is AuraFlow v0.2)*
 
-[Fal.ai's AuraFlow v0.1](https://huggingface.co/fal/AuraFlow/tree/main) and [v0.2](https://huggingface.co/fal/AuraFlow-v0.2) is supported in Swarm, but you must manually select architecture to use it. (The AuraFlow team said they intend to add modelspec metadata in the future).
+[Fal.ai's AuraFlow v0.1](https://huggingface.co/fal/AuraFlow/tree/main) and [v0.2](https://huggingface.co/fal/AuraFlow-v0.2) and v0.3 are supported in Swarm, but you must manually select architecture to use it.
 
-Download the model, then click "`Edit Metadata`" and select `(Temporary) AuraFlow` as the architecture, and set resolution to `1024x1024`.
+Download the model, then click "`Edit Metadata`" and select `AuraFlow` as the architecture, and set resolution to `1024x1024`.
+
+Parameters and usage is the same as any other normal model.
 
 # Black Forest Labs' Flux.1 Models
 
@@ -229,12 +231,14 @@ Download the model, then click "`Edit Metadata`" and select `(Temporary) AuraFlo
     - The advanced `Style Model Merge Strength` param lets you partial merge the style model against the nonstyled input, similar to Multiply Strength
     - The advanced `Style Model Multiply Strength` param directly multiplies the style model output, similar to Merge Strength
 - For "**Canny**" / "**Depth**" models, they work like regular models (or LoRAs), but require an Init Image to function.
+    - Goes in the regular `diffusion_models` or lora folder depending on which you downloaded.
     - You must input an appropriate image. So eg for the depth model, input a Depth Map.
         - You can use the controlnet parameter group to generate depth maps or canny images from regular images.
             - (TODO: Native interface to make that easier instead of janking controlnet)
     - Make sure to set Creativity to `1`.
     - This is similar in operation to Edit models.
 - For "**Fill**" (inpaint model), it works like other inpaint models.
+    - It's a regular model file, it goes in the regular `diffusion_models` folder same as other flux models.
     - "Edit Image" interface encouraged.
     - Mask a region and go.
     - Creativity `1` works well.
