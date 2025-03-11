@@ -466,7 +466,7 @@ public class WorkflowGenerator
                         ["image"] = new JArray() { result, 0 },
                         ["width"] = UserInput.GetImageWidth(),
                         ["height"] = UserInput.GetImageHeight(),
-                        ["upscale_method"] = "bilinear",
+                        ["upscale_method"] = "lanczos",
                         ["crop"] = "disabled"
                     }, nodeId);
                 }
@@ -571,7 +571,7 @@ public class WorkflowGenerator
             ["image"] = newImage,
             ["width"] = new JArray() { boundsNode, 2 },
             ["height"] = new JArray() { boundsNode, 3 },
-            ["upscale_method"] = "bilinear",
+            ["upscale_method"] = "lanczos",
             ["crop"] = "disabled"
         });
         if (!UserInput.Get(T2IParamTypes.MaskCompositeUnthresholded, false))
@@ -852,17 +852,17 @@ public class WorkflowGenerator
                 string dtype = UserInput.Get(ComfyUIBackendExtension.PreferredDType, "automatic");
                 if (dtype == "automatic")
                 {
-                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) // TODO: Or AMD?
+                    {
+                        dtype = "default";
+                    }
+                    else
                     {
                         dtype = "fp8_e4m3fn";
                         if (Utilities.PresumeNVidia30xx && Program.ServerSettings.Performance.AllowGpuSpecificOptimizations)
                         {
                             dtype = "fp8_e4m3fn_fast";
                         }
-                    }
-                    else
-                    {
-                        dtype = "default";
                     }
                 }
                 string modelNode = CreateNode("UNETLoader", new JObject()
@@ -1746,7 +1746,7 @@ public class WorkflowGenerator
             ["image"] = FinalImageOut,
             ["width"] = width,
             ["height"] = height,
-            ["upscale_method"] = "bilinear",
+            ["upscale_method"] = "lanczos",
             ["crop"] = "disabled"
         });
         FinalImageOut = [scaled, 0];
