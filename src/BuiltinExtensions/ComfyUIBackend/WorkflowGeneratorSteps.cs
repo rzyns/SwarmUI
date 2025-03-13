@@ -213,7 +213,7 @@ public class WorkflowGeneratorSteps
                 {
                     if (teaCacheMode != "video only")
                     {
-                        string teaCacheNode = g.CreateNode("TeaCache", new JObject()
+                        string teaCacheNode = g.CreateNode(g.Features.Contains("teacache_oldvers") ? "TeaCacheForImgGen" : "TeaCache", new JObject()
                         {
                             ["model"] = g.LoadingModel,
                             ["model_type"] = "flux",
@@ -257,7 +257,7 @@ public class WorkflowGeneratorSteps
                             }
                         }
                     }
-                    string teaCacheNode = g.CreateNode("TeaCache", new JObject()
+                    string teaCacheNode = g.CreateNode(g.Features.Contains("teacache_oldvers") ? "TeaCacheForVidGen" : "TeaCache", new JObject()
                     {
                         ["model"] = g.LoadingModel,
                         ["model_type"] = type,
@@ -1437,7 +1437,9 @@ public class WorkflowGeneratorSteps
                         });
                         g.FinalImageOut = [trimNode, 0];
                     }
-                    if (g.UserInput.TryGet(ComfyUIBackendExtension.Text2VideoFrameInterpolationMethod, out string method) && g.UserInput.TryGet(ComfyUIBackendExtension.Text2VideoFrameInterpolationMultiplier, out int mult) && mult > 1)
+                    if (g.UserInput.TryGet(ComfyUIBackendExtension.Text2VideoFrameInterpolationMethod, out string method)
+                        && g.UserInput.TryGet(ComfyUIBackendExtension.Text2VideoFrameInterpolationMultiplier, out int mult) && mult > 1
+                        && g.UserInput.Get(T2IParamTypes.Text2VideoFrames, 99) > 1)
                     {
                         if (g.UserInput.Get(T2IParamTypes.SaveIntermediateImages, false))
                         {
