@@ -241,7 +241,7 @@ public static class AdminAPI
         long lastSeq = Interlocked.Read(ref Logs.LogTracker.LastSequenceID);
         result["last_sequence_id"] = lastSeq;
         JObject messageData = [];
-        List<string> types = raw["types"].Select(v => $"{v}").ToList();
+        List<string> types = [.. raw["types"].Select(v => $"{v}")];
         foreach (string type in types)
         {
             Logs.LogTracker tracker;
@@ -418,7 +418,7 @@ public static class AdminAPI
     public static async Task<JObject> DebugLanguageAdd(Session session,
         [API.APIParameter("\"set\": [ \"word\", ... ]")] JObject raw)
     {
-        LanguagesHelper.TrackSet(raw["set"].ToArray().Select(v => $"{v}").ToArray());
+        LanguagesHelper.TrackSet([.. raw["set"].ToArray().Select(v => $"{v}")]);
         return new JObject() { ["success"] = true };
     }
 
@@ -457,13 +457,13 @@ public static class AdminAPI
             }
             return result;
         }
-        JArray list = new(Program.Sessions.Users.Values.Where(u => u.TimeSinceLastPresent.TotalMinutes < 3 && !u.UserID.StartsWith("__")).OrderBy(u => u.UserID).Select(u => new JObject()
+        JArray list = [.. Program.Sessions.Users.Values.Where(u => u.TimeSinceLastPresent.TotalMinutes < 3 && !u.UserID.StartsWith("__")).OrderBy(u => u.UserID).Select(u => new JObject()
         {
             ["id"] = u.UserID,
             ["last_active_seconds"] = u.TimeSinceLastUsed.TotalSeconds,
             ["active_sessions"] = sessWrangle(u.CurrentSessions.Values.Where(s => s.TimeSinceLastUsed.TotalMinutes < 3).Select(s => s.OriginAddress)),
             ["last_active"] = $"{u.TimeSinceLastUsed.SimpleFormat(false, false)} ago"
-        }).ToArray());
+        }).ToArray()];
         return new JObject() { ["users"] = list };
     }
 
@@ -609,7 +609,7 @@ public static class AdminAPI
         """)]
     public static async Task<JObject> AdminListUsers(Session session)
     {
-        List<string> users = Program.Sessions.UserDatabase.FindAll().Select(u => u.ID).ToList();
+        List<string> users = [.. Program.Sessions.UserDatabase.FindAll().Select(u => u.ID)];
         return new JObject() { ["users"] = JArray.FromObject(users) };
     }
 
@@ -629,6 +629,14 @@ public static class AdminAPI
         {
             return new JObject() { ["error"] = "Username must be at least 3 characters long, A-Z 0-9 only." };
         }
+        if (password.Length < 8)
+        {
+            return new JObject() { ["error"] = "Password must be at least 8 characters long." };
+        }
+        if (cleaned.Length > 70 || password.Length > 500)
+        {
+            return new JObject() { ["error"] = "Username or password too long." };
+        }
         lock (Program.Sessions.DBLock)
         {
             User existing = Program.Sessions.GetUser(cleaned, false);
@@ -639,10 +647,12 @@ public static class AdminAPI
             User.DatabaseEntry userData = new() { ID = cleaned, RawSettings = "\n" };
             User user = new(Program.Sessions, userData);
             user.Settings.Roles = [role];
+            user.Settings.TrySetFieldModified(nameof(User.Settings.Roles), true);
             user.Data.PasswordHashed = Utilities.HashPassword(cleaned, password);
             user.Data.IsPasswordSetByAdmin = true;
-            Program.Sessions.Users.TryAdd(cleaned, user);
+            user.BuildRoles();
             user.Save();
+            Program.Sessions.Users.TryAdd(cleaned, user);
         }
         return new JObject() { ["success"] = true };
     }
@@ -669,6 +679,10 @@ public static class AdminAPI
             if (password.Length < 8)
             {
                 return new JObject() { ["error"] = "Password must be at least 8 characters long." };
+            }
+            if (password.Length > 500)
+            {
+                return new JObject() { ["error"] = "Password too long." };
             }
             user.Data.PasswordHashed = Utilities.HashPassword(user.UserID, password);
         }
@@ -753,7 +767,7 @@ public static class AdminAPI
         {
             ["user_id"] = user.UserID,
             ["password_set_by_admin"] = user.Data.IsPasswordSetByAdmin,
-            ["settings"] = AutoConfigToParamData(session.User.Settings, false),
+            ["settings"] = AutoConfigToParamData(user.Settings, false),
             ["max_t2i"] = user.CalcMaxT2ISimultaneous
         };
     }
@@ -844,9 +858,9 @@ public static class AdminAPI
             role.Data.MaxOutPathDepth = max_outpath_depth;
             role.Data.MaxT2ISimultaneous = max_t2i_simultaneous;
             role.Data.AllowUnsafeOutpaths = allow_unsafe_outpaths;
-            role.Data.ModelWhitelist = model_whitelist.Split(',').Select(s => s.Trim()).ToHashSet();
-            role.Data.ModelBlacklist = model_blacklist.Split(',').Select(s => s.Trim()).ToHashSet();
-            role.Data.PermissionFlags = permissions.Split(',').Select(s => s.Trim()).ToHashSet();
+            role.Data.ModelWhitelist = [.. model_whitelist.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrWhiteSpace(s))];
+            role.Data.ModelBlacklist = [.. model_blacklist.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrWhiteSpace(s))];
+            role.Data.PermissionFlags = [.. permissions.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrWhiteSpace(s))];
             Program.Sessions.Save();
         }
         return new JObject() { ["success"] = true };

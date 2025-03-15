@@ -35,7 +35,7 @@ public static class ModelsAPI
 
     public static Dictionary<string, JObject> InternalExtraModels(string subtype)
     {
-        SwarmSwarmBackend[] backends = Program.Backends.RunningBackendsOfType<SwarmSwarmBackend>().Where(b => b.RemoteModels is not null).ToArray();
+        SwarmSwarmBackend[] backends = [.. Program.Backends.RunningBackendsOfType<SwarmSwarmBackend>().Where(b => b.RemoteModels is not null)];
         IEnumerable<Dictionary<string, JObject>> sets = backends.Select(b => b.RemoteModels.GetValueOrDefault(subtype)).Where(b => b is not null);
         if (sets.IsEmpty())
         {
@@ -276,7 +276,7 @@ public static class ModelsAPI
     public static async Task<JObject> ListLoadedModels(Session session)
     {
         using ManyReadOneWriteLock.ReadClaim claim = Program.RefreshLock.LockRead();
-        List<T2IModel> matches = Program.MainSDModels.Models.Values.Where(m => m.AnyBackendsHaveLoaded && session.User.IsAllowedModel(m.Name)).ToList();
+        List<T2IModel> matches = [.. Program.MainSDModels.Models.Values.Where(m => m.AnyBackendsHaveLoaded && session.User.IsAllowedModel(m.Name))];
         return new JObject()
         {
             ["models"] = JArray.FromObject(matches.Select(m => m.ToNetObject()).ToList())
